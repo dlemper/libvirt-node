@@ -12,6 +12,7 @@ import {
     DomainDiskDesc,
     DomainInterfaceDesc,
     DomainGraphicsDesc,
+    DomainHostdevDesc,
 } from "./domain-desc";
 
 export class DomainBuilder {
@@ -36,6 +37,12 @@ export class DomainBuilder {
     addDisk(diskDesc: DomainDiskDesc): DomainBuilder {
         if (!this.domainDesc.devices) this.domainDesc.devices = [ ];
         this.domainDesc.devices.push({ type: "disk", disk: diskDesc });
+        return this;
+    }
+
+    addHostdev(hostdevDesc: DomainHostdevDesc): DomainBuilder {
+        if (!this.domainDesc.devices) this.domainDesc.devices = [ ];
+        this.domainDesc.devices.push({ type: "hostdev", hostdev: hostdevDesc });
         return this;
     }
 
