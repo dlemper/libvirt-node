@@ -16,6 +16,7 @@ import {
     DomainDiskDesc,
     DomainInterfaceDesc,
     DomainGraphicsDesc,
+    DomainHostdevDesc,
 } from "./domain-desc";
 
 export const domainOsXml = {
@@ -192,6 +193,56 @@ export const domainInterfaceXml = {
         }
 
         return interfaceDesc;
+    },
+
+};
+
+export const domainHostdevXml = {
+
+    serialize(hostdevDesc: DomainHostdevDesc): { } {
+        // tslint:disable-next-line:no-any
+        const hostdev: any = { $: { } };
+
+        if (hostdevDesc.type) hostdev.$.type = hostdevDesc.type;
+        if (hostdevDesc.mode) hostdev.$.mode = hostdevDesc.mode;
+
+        if (hostdevDesc.source) {
+            if (hostdevDesc.source.vendor) {
+                hostdev.source.vendor = { $: { } };
+                if (hostdevDesc.source.vendor.id) {
+                    hostdev.source.vendor.$.id = hostdevDesc.source.vendor.id;
+                }
+            }
+            if (hostdevDesc.source.product) {
+                hostdev.source.product = { $: { } };
+                if (hostdevDesc.source.product.id) {
+                    hostdev.source.product.$.id = hostdevDesc.source.product.id;
+                }
+            }
+        }
+
+        return hostdev;
+    },
+
+    // tslint:disable-next-line:no-any
+    deserialize(hostdev: any): DomainHostdevDesc {
+        const hostdevDesc: DomainHostdevDesc = { };
+
+        if (hostdev.$.type) hostdevDesc.type = hostdev.$.type;
+        if (hostdev.$.mode) hostdevDesc.mode = hostdev.$.mode;
+
+        if (hostdev.source && hostdev.source.vendor[0]) {
+            if (hostdev.source.vendor[0].$.id) {
+                //hostdevDesc.source.vendor = { id: string };
+                hostdevDesc.source?.vendor[0].id = hostdev.source.vendor[0].$.id;
+                //hostdevDesc.source.vendor = hostdev.source.vendor[0].$.id;
+            }
+            if (hostdev.source.vendor[0].$.id) {
+                //hostdevDesc.source.vendor = hostdev.source.vendor[0].$.id;
+            }
+        }
+
+        return hostdevDesc;
     },
 
 };
