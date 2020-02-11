@@ -231,14 +231,16 @@ export const domainHostdevXml = {
         if (hostdev.$.type) hostdevDesc.type = hostdev.$.type;
         if (hostdev.$.mode) hostdevDesc.mode = hostdev.$.mode;
 
-        if (hostdev.source && hostdev.source.vendor[0]) {
-            if (hostdev.source.vendor[0].$.id) {
-                //hostdevDesc.source.vendor = { id: string };
-                hostdevDesc.source?.vendor[0].id = hostdev.source.vendor[0].$.id;
-                //hostdevDesc.source.vendor = hostdev.source.vendor[0].$.id;
-            }
-            if (hostdev.source.vendor[0].$.id) {
-                //hostdevDesc.source.vendor = hostdev.source.vendor[0].$.id;
+        if (hostdev.source &&
+            hostdev.source.vendor[0] &&
+            hostdev.source.product[0]) {
+
+            if (typeof hostdev.source.vendor[0] === "object" &&
+                typeof hostdev.source.product[0] === "object") {
+                hostdevDesc.source = {
+                    vendor: { id: hostdev.source.vendor[0].$.id },
+                    product: { id: hostdev.source.product[0].$.id },
+                };
             }
         }
 
@@ -316,6 +318,7 @@ export function domainDescToXml(desc: DomainDesc): string {
             interface: [ ],
             console: [ ],
             graphics: [ ],
+            hostdev: [ ],
         };
 
         for (const deviceDesc of desc.devices) {
@@ -348,6 +351,11 @@ export function domainDescToXml(desc: DomainDesc): string {
                 case "graphics":
                     domain.devices.graphics.push(
                         domainGraphicsXml.serialize(deviceDesc.graphics));
+                    break;
+
+                case "hostdev":
+                    domain.devices.hostdev.push(
+                        domainHostdevXml.serialize(deviceDesc.hostdev));
                     break;
 
                 default:
@@ -462,6 +470,15 @@ export async function domainDescFromXml(xml: string): Promise<DomainDesc> {
                 domainDesc.devices.push({
                     type: "graphics",
                     graphics: domainGraphicsXml.deserialize(graphics),
+                });
+            }
+        }
+
+        if (parsed.domain.devices[0].hostdev) {
+            for (const hostdev of parsed.domain.devices[0].hostdev) {
+                domainDesc.devices.push({
+                    type: "hostdev",
+                    hostdev: domainHostdevXml.deserialize(hostdev),
                 });
             }
         }
