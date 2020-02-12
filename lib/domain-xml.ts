@@ -231,15 +231,15 @@ export const domainHostdevXml = {
         if (hostdev.$.type) hostdevDesc.type = hostdev.$.type;
         if (hostdev.$.mode) hostdevDesc.mode = hostdev.$.mode;
 
-        if (hostdev.source &&
-            hostdev.source.vendor[0] &&
-            hostdev.source.product[0]) {
+        if (hostdev.source[0] &&
+            hostdev.source[0].vendor[0] &&
+            hostdev.source[0].product[0]) {
 
-            if (typeof hostdev.source.vendor[0] === "object" &&
-                typeof hostdev.source.product[0] === "object") {
+            if (typeof hostdev.source[0].vendor[0] === "object" &&
+                typeof hostdev.source[0].product[0] === "object") {
                 hostdevDesc.source = {
-                    vendor: { id: hostdev.source.vendor[0].$.id },
-                    product: { id: hostdev.source.product[0].$.id },
+                    vendor: { id: hostdev.source[0].vendor[0].$.id },
+                    product: { id: hostdev.source[0].product[0].$.id },
                 };
             }
         }

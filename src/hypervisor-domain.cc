@@ -1,6 +1,6 @@
 /**
  * Copyright 2019 Leon Rinkel <leon@rinkel.me> and vmngr/libvirt contributers.
- * 
+ *
  * This file is part of the vmngr/libvirt project and is subject to the MIT
  * license as in the LICENSE file in the project root.
  */
@@ -46,6 +46,61 @@ class DomainCreateXMLWorker : public Worker {
 
  private:
     std::string domainXml;
+    virDomainPtr domainPtr;
+};
+
+Napi::Value Hypervisor::DomainCreateXML(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+
+    Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+    Napi::Function callback = Napi::Function::New(env, dummyCallback);
+
+    if (info.Length() <= 0 || !info[0].IsString()) {
+        deferred.Reject(Napi::String::New(env, "Expected a string"));
+        return deferred.Promise();
+    }
+
+    Napi::String domainXml = info[0].As<Napi::String>();
+
+    DomainCreateXMLWorker* worker =
+        new DomainCreateXMLWorker(callback, deferred, this, domainXml);
+    worker->Queue();
+
+    return deferred.Promise();
+}
+
+/******************************************************************************
+ * DomainUpdateDeviceXML                                                      *
+ ******************************************************************************/
+class DomainUpdateDeviceXMLWorker : public Worker {
+ public:
+    DomainUpdateDeviceXMLWorker(
+        Napi::Function const& callback,
+        Napi::Promise::Deferred deferred,
+        Hypervisor* hypervisor,
+        std::string deviceXml,
+        unsigned int flags)
+        : Worker(callback, deferred, hypervisor), deviceXml(deviceXml) {}
+
+    void Execute(void) override {
+        domainPtr = virDomainUpdateDeviceFlags(hypervisor->conn, domainXml.c_str(), 0);
+        if (!domainPtr) SetVirError();
+    }
+
+    void OnOK(void) override {
+        Napi::HandleScope scope(Env());
+
+        Napi::Object domain = Domain::constructor.New({
+            Napi::External<virDomain>::New(Env(), domainPtr) });
+
+        deferred.Resolve(domain);
+        Callback().Call({});
+    }
+
+ private:
+    std::string deviceXml;
+    unsigned int flags;
     virDomainPtr domainPtr;
 };
 
