@@ -207,6 +207,7 @@ export const domainHostdevXml = {
         if (hostdevDesc.mode) hostdev.$.mode = hostdevDesc.mode;
 
         if (hostdevDesc.source) {
+            hostdev.source = { $: { } };
             if (hostdevDesc.source.vendor) {
                 hostdev.source.vendor = { $: { } };
                 if (hostdevDesc.source.vendor.id) {
@@ -276,6 +277,66 @@ export const domainGraphicsXml = {
     },
 
 };
+
+export function domainDescDeviceToXml(desc: DomainDesc, type?: string): string {
+
+    let devices: any = { $: { } };
+
+    if (desc.devices) {
+        devices = {
+            emulator: [ ],
+            disk: [ ],
+            interface: [ ],
+            console: [ ],
+            graphics: [ ],
+            hostdev: [ ],
+        };
+
+        for (const deviceDesc of desc.devices) {
+            // tslint:disable-next-line:no-any
+            const device: any = { $: { } };
+
+            switch (deviceDesc.type) {
+                case "emulator":
+                    const emulatorDesc = deviceDesc.emulator;
+                    if (emulatorDesc.value) device._ = emulatorDesc.value;
+                    devices.emulator.push(device);
+                    break;
+
+                case "disk":
+                    devices.disk.push(
+                        domainDiskXml.serialize(deviceDesc.disk));
+                    break;
+
+                case "interface":
+                    devices.interface.push(
+                        domainInterfaceXml.serialize(deviceDesc.interface));
+                    break;
+
+                case "console":
+                    const consoleDesc = deviceDesc.console;
+                    if (consoleDesc.type) device.$.type = consoleDesc.type;
+                    devices.console.push(device);
+                    break;
+
+                case "graphics":
+                    devices.graphics.push(
+                        domainGraphicsXml.serialize(deviceDesc.graphics));
+                    break;
+
+                case "hostdev":
+                    devices.hostdev.push(
+                        domainHostdevXml.serialize(deviceDesc.hostdev));
+                    break;
+
+                default:
+            }
+        }
+    }
+
+    const builder = new xml2js.Builder({ headless: true });
+    return builder.buildObject({ devices });
+}
 
 export function domainDescToXml(desc: DomainDesc): string {
     // tslint:disable-next-line:no-any

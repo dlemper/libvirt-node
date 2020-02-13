@@ -25,6 +25,7 @@ class ConnectGetMaxVcpusWorker;
 class ConnectGetHostnameWorker;
 
 class DomainCreateXMLWorker;
+class DomainUpdateDeviceFlags;
 class DomainDefineXMLWorker;
 class DomainGetInfoWorker;
 class DomainGetIDWorker;

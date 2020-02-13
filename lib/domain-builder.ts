@@ -40,16 +40,24 @@ export class DomainBuilder {
         return this;
     }
 
+    removeDisks(): DomainBuilder {
+        if (this.domainDesc.devices) {
+            this.domainDesc.devices = this.domainDesc.devices
+                .filter((device) => device.type !== "disk");
+        }
+        return this;
+    }
+
     addHostdev(hostdevDesc: DomainHostdevDesc): DomainBuilder {
         if (!this.domainDesc.devices) this.domainDesc.devices = [ ];
         this.domainDesc.devices.push({ type: "hostdev", hostdev: hostdevDesc });
         return this;
     }
 
-    removeDisks(): DomainBuilder {
+    removeHostdev(): DomainBuilder {
         if (this.domainDesc.devices) {
             this.domainDesc.devices = this.domainDesc.devices
-                .filter((device) => device.type !== "disk");
+                .filter((device) => device.type !== "hostdev");
         }
         return this;
     }
