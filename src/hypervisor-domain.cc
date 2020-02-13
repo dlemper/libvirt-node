@@ -71,21 +71,23 @@ Napi::Value Hypervisor::DomainCreateXML(const Napi::CallbackInfo& info) {
 }
 
 /******************************************************************************
- * DomainUpdateDeviceXML                                                      *
+ * DomainUpdateDeviceFlags                                                      *
  ******************************************************************************/
-class DomainUpdateDeviceXMLWorker : public Worker {
+class DomainUpdateDeviceFlagsWorker : public Worker {
  public:
-    DomainUpdateDeviceXMLWorker(
+    DomainUpdateDeviceFlagsWorker(
         Napi::Function const& callback,
         Napi::Promise::Deferred deferred,
         Hypervisor* hypervisor,
+        Domain* domain,
         std::string deviceXml,
         unsigned int flags)
-        : Worker(callback, deferred, hypervisor), deviceXml(deviceXml) {}
+        : Worker(callback, deferred, hypervisor), domain(domain), deviceXml(deviceXml),
+          flags(flags) {}
 
     void Execute(void) override {
-        domainPtr = virDomainUpdateDeviceFlags(hypervisor->conn, domainXml.c_str(), 0);
-        if (!domainPtr) SetVirError();
+        int update = virDomainUpdateDeviceFlags(domain->domainPtr, deviceXml.c_str(), flags);
+        if (update < 0) SetVirError();
     }
 
     void OnOK(void) override {
@@ -99,12 +101,12 @@ class DomainUpdateDeviceXMLWorker : public Worker {
     }
 
  private:
+    Domain *domain;
     std::string deviceXml;
     unsigned int flags;
-    virDomainPtr domainPtr;
 };
 
-Napi::Value Hypervisor::DomainCreateXML(const Napi::CallbackInfo& info) {
+Napi::Value Hypervisor::DomainUpdateDeviceFlags(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
 
@@ -116,10 +118,10 @@ Napi::Value Hypervisor::DomainCreateXML(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
 
-    Napi::String domainXml = info[0].As<Napi::String>();
+    Napi::String deviceXml = info[0].As<Napi::String>();
 
-    DomainCreateXMLWorker* worker =
-        new DomainCreateXMLWorker(callback, deferred, this, domainXml);
+    DomainUpdateDeviceFlagsWorker* worker = new DomainUpdateDeviceFlagsWorker(
+        callback, deferred, this, domain, deviceXml, flags);
     worker->Queue();
 
     return deferred.Promise();

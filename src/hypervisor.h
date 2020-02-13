@@ -1,6 +1,6 @@
 /**
  * Copyright 2019 Leon Rinkel <leon@rinkel.me> and vmngr/libvirt contributers.
- * 
+ *
  * This file is part of the vmngr/libvirt project and is subject to the MIT
  * license as in the LICENSE file in the project root.
  */
@@ -55,6 +55,7 @@ class Hypervisor : public Napi::ObjectWrap<Hypervisor> {
     Napi::Value ConnectGetHostname(const Napi::CallbackInfo& info);
 
     Napi::Value DomainCreateXML(const Napi::CallbackInfo& info);
+    Napi::Value DomainUpdateDeviceFlags(const Napi::CallbackInfo& info);
     Napi::Value DomainDefineXML(const Napi::CallbackInfo& info);
     Napi::Value DomainGetInfo(const Napi::CallbackInfo& info);
     Napi::Value DomainGetID(const Napi::CallbackInfo& info);
@@ -86,6 +87,7 @@ class Hypervisor : public Napi::ObjectWrap<Hypervisor> {
     friend class ConnectGetHostnameWorker;
 
     friend class DomainCreateXMLWorker;
+    friend class DomainUpdateDeviceFlags;
     friend class DomainDefineXMLWorker;
     friend class DomainGetInfoWorker;
     friend class DomainGetIDWorker;
