@@ -3,7 +3,10 @@
         {
             "target_name": "virt",
             "product_prefix": "lib",
-            "cflags!": [ "-fno-exceptions" ],
+            "cflags!": [
+                "<!@(pkg-config --cflags libvirt)",
+                "-fno-exceptions"
+            ],
             "cflags_cc!": [ "-fno-exceptions" ],
             "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
             "sources": [
@@ -20,7 +23,9 @@
                 "."
             ],
             "link_settings": {
-                "libraries": [ "-lvirt" ]
+                "libraries": [
+                    "<!@(pkg-config --libs libvirt)"
+                ]
             }
         }
     ]
