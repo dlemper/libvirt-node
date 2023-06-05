@@ -1,6 +1,6 @@
 /**
  * Copyright 2019 Leon Rinkel <leon@rinkel.me> and vmngr/libvirt contributers.
- * 
+ *
  * This file is part of the vmngr/libvirt project and is subject to the MIT
  * license as in the LICENSE file in the project root.
  */
@@ -65,6 +65,67 @@ Napi::Value Hypervisor::DomainCreateXML(const Napi::CallbackInfo& info) {
 
     DomainCreateXMLWorker* worker =
         new DomainCreateXMLWorker(callback, deferred, this, domainXml);
+    worker->Queue();
+
+    return deferred.Promise();
+}
+
+/******************************************************************************
+ * DomainUpdateDeviceFlags                                                      *
+ ******************************************************************************/
+class DomainUpdateDeviceFlagsWorker : public Worker {
+ public:
+    DomainUpdateDeviceFlagsWorker(
+        Napi::Function const& callback,
+        Napi::Promise::Deferred deferred,
+        Hypervisor* hypervisor,
+        Domain* domain,
+        std::string deviceXml,
+        unsigned int flags)
+        : Worker(callback, deferred, hypervisor), domain(domain), deviceXml(deviceXml),
+          flags(flags) {}
+
+    void Execute(void) override {
+        int update = virDomainUpdateDeviceFlags(domain->domainPtr, deviceXml.c_str(), flags);
+        if (update < 0) SetVirError();
+    }
+
+ private:
+    Domain *domain;
+    std::string deviceXml;
+    unsigned int flags;
+};
+
+Napi::Value Hypervisor::DomainUpdateDeviceFlags(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+
+    Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+    Napi::Function callback = Napi::Function::New(env, dummyCallback);
+
+    if (info.Length() <= 0 || !info[0].IsObject()) {
+        deferred.Reject(Napi::String::New(env, "Expected an object."));
+        return deferred.Promise();
+    }
+    Domain* domain = Napi::ObjectWrap<Domain>::Unwrap(
+        info[0].As<Napi::Object>());
+
+    if (info.Length() <= 1 || !info[1].IsString()) {
+        deferred.Reject(Napi::String::New(env, "Expected a string."));
+        return deferred.Promise();
+    }
+    Napi::String deviceXml = info[1].As<Napi::String>();
+
+    unsigned int flags = 0;
+    if (info.Length() >= 3 && info[3].IsNumber()) {
+        flags = info[2].As<Napi::Number>();
+    } else if (info.Length() >= 3 && !info[2].IsNumber()) {
+        deferred.Reject(Napi::String::New(env, "Expected a number."));
+        return deferred.Promise();
+    }
+
+    DomainUpdateDeviceFlagsWorker* worker = new DomainUpdateDeviceFlagsWorker(
+        callback, deferred, this, domain, deviceXml, flags);
     worker->Queue();
 
     return deferred.Promise();

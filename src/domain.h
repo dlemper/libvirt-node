@@ -1,6 +1,6 @@
 /**
  * Copyright 2019 Leon Rinkel <leon@rinkel.me> and vmngr/libvirt contributers.
- * 
+ *
  * This file is part of the vmngr/libvirt project and is subject to the MIT
  * license as in the LICENSE file in the project root.
  */
@@ -30,6 +30,7 @@ class Domain : public Napi::ObjectWrap<Domain> {
     friend class ConnectListAllDomainsWorker;
 
     friend class DomainCreateXMLWorker;
+    friend class DomainUpdateDeviceFlagsWorker;
     friend class DomainDefineXMLWorker;
     friend class DomainGetInfoWorker;
     friend class DomainGetIDWorker;

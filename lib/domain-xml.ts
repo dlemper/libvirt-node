@@ -16,6 +16,7 @@ import {
     DomainDiskDesc,
     DomainInterfaceDesc,
     DomainGraphicsDesc,
+    DomainHostdevDesc,
 } from "./domain-desc";
 
 export const domainOsXml = {
@@ -196,6 +197,59 @@ export const domainInterfaceXml = {
 
 };
 
+export const domainHostdevXml = {
+
+    serialize(hostdevDesc: DomainHostdevDesc): { } {
+        // tslint:disable-next-line:no-any
+        const hostdev: any = { $: { } };
+
+        if (hostdevDesc.type) hostdev.$.type = hostdevDesc.type;
+        if (hostdevDesc.mode) hostdev.$.mode = hostdevDesc.mode;
+
+        if (hostdevDesc.source) {
+            hostdev.source = { $: { } };
+            if (hostdevDesc.source.vendor) {
+                hostdev.source.vendor = { $: { } };
+                if (hostdevDesc.source.vendor.id) {
+                    hostdev.source.vendor.$.id = hostdevDesc.source.vendor.id;
+                }
+            }
+            if (hostdevDesc.source.product) {
+                hostdev.source.product = { $: { } };
+                if (hostdevDesc.source.product.id) {
+                    hostdev.source.product.$.id = hostdevDesc.source.product.id;
+                }
+            }
+        }
+
+        return hostdev;
+    },
+
+    // tslint:disable-next-line:no-any
+    deserialize(hostdev: any): DomainHostdevDesc {
+        const hostdevDesc: DomainHostdevDesc = { };
+
+        if (hostdev.$.type) hostdevDesc.type = hostdev.$.type;
+        if (hostdev.$.mode) hostdevDesc.mode = hostdev.$.mode;
+
+        if (hostdev.source[0] &&
+            hostdev.source[0].vendor[0] &&
+            hostdev.source[0].product[0]) {
+
+            if (typeof hostdev.source[0].vendor[0] === "object" &&
+                typeof hostdev.source[0].product[0] === "object") {
+                hostdevDesc.source = {
+                    vendor: { id: hostdev.source[0].vendor[0].$.id },
+                    product: { id: hostdev.source[0].product[0].$.id },
+                };
+            }
+        }
+
+        return hostdevDesc;
+    },
+
+};
+
 export const domainGraphicsXml = {
 
     serialize(graphicsDesc: DomainGraphicsDesc): { } {
@@ -223,6 +277,66 @@ export const domainGraphicsXml = {
     },
 
 };
+
+export function domainDescDeviceToXml(desc: DomainDesc, type?: string): string {
+
+    let devices: any = { $: { } };
+
+    if (desc.devices) {
+        devices = {
+            emulator: [ ],
+            disk: [ ],
+            interface: [ ],
+            console: [ ],
+            graphics: [ ],
+            hostdev: [ ],
+        };
+
+        for (const deviceDesc of desc.devices) {
+            // tslint:disable-next-line:no-any
+            const device: any = { $: { } };
+
+            switch (deviceDesc.type) {
+                case "emulator":
+                    const emulatorDesc = deviceDesc.emulator;
+                    if (emulatorDesc.value) device._ = emulatorDesc.value;
+                    devices.emulator.push(device);
+                    break;
+
+                case "disk":
+                    devices.disk.push(
+                        domainDiskXml.serialize(deviceDesc.disk));
+                    break;
+
+                case "interface":
+                    devices.interface.push(
+                        domainInterfaceXml.serialize(deviceDesc.interface));
+                    break;
+
+                case "console":
+                    const consoleDesc = deviceDesc.console;
+                    if (consoleDesc.type) device.$.type = consoleDesc.type;
+                    devices.console.push(device);
+                    break;
+
+                case "graphics":
+                    devices.graphics.push(
+                        domainGraphicsXml.serialize(deviceDesc.graphics));
+                    break;
+
+                case "hostdev":
+                    devices.hostdev.push(
+                        domainHostdevXml.serialize(deviceDesc.hostdev));
+                    break;
+
+                default:
+            }
+        }
+    }
+
+    const builder = new xml2js.Builder({ headless: true });
+    return builder.buildObject({ devices });
+}
 
 export function domainDescToXml(desc: DomainDesc): string {
     // tslint:disable-next-line:no-any
@@ -265,6 +379,7 @@ export function domainDescToXml(desc: DomainDesc): string {
             interface: [ ],
             console: [ ],
             graphics: [ ],
+            hostdev: [ ],
         };
 
         for (const deviceDesc of desc.devices) {
@@ -297,6 +412,11 @@ export function domainDescToXml(desc: DomainDesc): string {
                 case "graphics":
                     domain.devices.graphics.push(
                         domainGraphicsXml.serialize(deviceDesc.graphics));
+                    break;
+
+                case "hostdev":
+                    domain.devices.hostdev.push(
+                        domainHostdevXml.serialize(deviceDesc.hostdev));
                     break;
 
                 default:
@@ -411,6 +531,15 @@ export async function domainDescFromXml(xml: string): Promise<DomainDesc> {
                 domainDesc.devices.push({
                     type: "graphics",
                     graphics: domainGraphicsXml.deserialize(graphics),
+                });
+            }
+        }
+
+        if (parsed.domain.devices[0].hostdev) {
+            for (const hostdev of parsed.domain.devices[0].hostdev) {
+                domainDesc.devices.push({
+                    type: "hostdev",
+                    hostdev: domainHostdevXml.deserialize(hostdev),
                 });
             }
         }

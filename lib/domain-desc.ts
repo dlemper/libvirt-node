@@ -30,6 +30,23 @@ export declare interface DomainOsDesc {
 }
 
 /**
+ * @see https://www.libvirt.org/formatdomain.html#elementsHostDev
+ * @todo Interface is not complete nor 100% correct.
+ */
+export declare interface DomainHostdevDesc {
+    type?: "usb";
+    mode?: "subsystem";
+
+    source?: {
+        vendor?: {
+            id: string;
+        };
+        product?: {
+            id: string;
+        };
+    };
+}
+/**
  * @see https://www.libvirt.org/formatdomain.html#elementsDisks
  * @todo Interface is not complete nor 100% correct.
  */
@@ -147,6 +164,11 @@ export declare interface DomainDesc {
         {
             type: "graphics";
             graphics: DomainGraphicsDesc;
+        } |
+
+        {
+            type: "hostdev";
+            hostdev: DomainHostdevDesc;
         }
 
     >;
